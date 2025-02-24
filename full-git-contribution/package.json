@@ -18,6 +18,7 @@
     "@types/react-dom": "^19.0.4",
     "axios": "^1.7.9",
     "octokat": "^0.10.0",
+    "qrcode.react": "^4.2.0",
     "react": "^19.0.0",
     "react-calendar-heatmap": "^1.10.0",
     "react-dom": "^19.0.0",
@@ -31,7 +32,8 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "deploy": "npm run build && rsync -avz build/ user@server:/var/www/afc/"
   },
   "eslintConfig": {
     "extends": [

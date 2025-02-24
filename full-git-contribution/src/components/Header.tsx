@@ -53,19 +53,25 @@ const Header: React.FC<HeaderProps> = ({
   return (
     <AppBar position="static" sx={{ 
       backgroundColor: 'white', 
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+      height: '80px'
     }}>
-      <Toolbar sx={{ justifyContent: 'space-between' }}>
+      <Toolbar sx={{ 
+        justifyContent: 'space-between',
+        height: '100%',
+        padding: '0 24px'
+      }}>
         <Typography 
           variant="h6" 
           component="div" 
           sx={{ 
             color: '#333',
             fontWeight: 600,
-            fontSize: '1.5rem'
+            fontSize: '1.8rem',
+            fontFamily: 'Montserrat, sans-serif'
           }}
         >
-          Git Contributions
+          GIT CONTRIBUTIONS
         </Typography>
 
         <Box sx={{ 
@@ -79,7 +85,7 @@ const Header: React.FC<HeaderProps> = ({
                 variant="h6" 
                 sx={{ 
                   color: '#333',
-                  fontSize: '1.2rem',
+                  fontSize: '1.4rem',
                   fontWeight: 500
                 }}
               >
@@ -89,18 +95,32 @@ const Header: React.FC<HeaderProps> = ({
           ) : (
             <>
               <TextField
-                size="small"
+                size="medium"
                 label="Prénom"
                 value={firstName}
                 onChange={handleFirstNameChange}
-                sx={{ backgroundColor: '#f5f5f5', borderRadius: '4px' }}
+                sx={{ 
+                  backgroundColor: '#f5f5f5', 
+                  borderRadius: '4px',
+                  '& .MuiInputBase-input': {
+                    fontSize: '1.1rem',
+                    padding: '12px 14px'
+                  }
+                }}
               />
               <TextField
-                size="small"
+                size="medium"
                 label="Nom"
                 value={lastName}
                 onChange={handleLastNameChange}
-                sx={{ backgroundColor: '#f5f5f5', borderRadius: '4px' }}
+                sx={{ 
+                  backgroundColor: '#f5f5f5', 
+                  borderRadius: '4px',
+                  '& .MuiInputBase-input': {
+                    fontSize: '1.1rem',
+                    padding: '12px 14px'
+                  }
+                }}
               />
             </>
           )}

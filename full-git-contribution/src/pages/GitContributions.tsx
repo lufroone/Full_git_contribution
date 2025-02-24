@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Box, TextField, Button, Grid, Typography, Container, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
-import CalendarHeatmap from 'react-calendar-heatmap';
+import CalendarHeatmap, { TooltipDataAttrs } from 'react-calendar-heatmap';
 import 'react-calendar-heatmap/dist/styles.css';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
@@ -9,6 +9,7 @@ import { fetchGitlabContributions } from '../services/gitlabService';
 import { BaseUser, User, ContributionDay } from '../types';
 import { UrlService } from '../services/urlService';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import ShareModal from '../components/ShareModal';
 
 interface DisplayUser extends User {
   firstName: string;
@@ -30,6 +31,8 @@ const GitContributions: React.FC = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [isReadOnly, setIsReadOnly] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [readOnlyUrl, setReadOnlyUrl] = useState('');
   const navigate = useNavigate();
 
   const { users: urlUsers } = useParams();
@@ -165,6 +168,18 @@ const GitContributions: React.FC = () => {
     navigator.clipboard.writeText(readOnlyUrl);
   };
 
+  const handleShareClick = () => {
+    const url = UrlService.getReadOnlyUrl(users, firstName, lastName);
+    setReadOnlyUrl(url);
+    setShareModalOpen(true);
+  };
+
+  const theme = {
+    typography: {
+      fontFamily: 'Montserrat, sans-serif',
+    }
+  };
+
   return (
     <>
       <Header 
@@ -173,30 +188,35 @@ const GitContributions: React.FC = () => {
         firstName={firstName}
         lastName={lastName}
         readonly={isReadOnly}
+        onCopyReadOnlyLink={handleCopyReadOnlyLink}
       />
-      <Container maxWidth="lg">
+      <Container maxWidth="lg" sx={{ mt: 4, fontFamily: 'Montserrat, sans-serif' }}>
         <Box sx={{ py: 4 }}>
           <Box sx={{ 
             display: 'flex', 
             justifyContent: 'flex-end',
-            mb: 2
+            width: '100%',
+            mt: 4
           }}>
             {!isReadOnly && (
               <Button
                 variant="outlined"
                 size="small"
-                onClick={handleCopyReadOnlyLink}
+                onClick={handleShareClick}
                 startIcon={<ContentCopyIcon />}
+                sx={{
+                  marginLeft: 'auto'
+                }}
               >
-                Copier lien lecture seule
+                Partager
               </Button>
             )}
           </Box>
 
           <Typography variant="h4" gutterBottom>
             {isReadOnly 
-              ? `Contributions de ${firstName} ${lastName}`
-              : 'Vos Comptes'
+              ? `CONTRIBUTIONS DE : ${firstName} ${lastName}`
+              : 'VOS COMPTES'
             }
           </Typography>
 
@@ -205,6 +225,7 @@ const GitContributions: React.FC = () => {
             flexDirection: 'column', 
             gap: 2,
             mb: 4,
+            mt: 4,
             transition: 'all 0.3s ease'
           }}>
             {displayUsers.map((user, index) => (
@@ -344,7 +365,7 @@ const GitContributions: React.FC = () => {
                 <TextField
                   value={newToken}
                   onChange={(e) => setNewToken(e.target.value)}
-                  label="Token (optionnel)"
+                  label="Token (read-only profile)"
                   size="small"
                   type="password"
                 />
@@ -380,8 +401,8 @@ const GitContributions: React.FC = () => {
 
           {/* Calendrier global */}
           <Box sx={{ mt: 12, mb: 4 }}>
-            <Typography variant="h4" gutterBottom sx={{ mb: 4, mt: 4 }}>
-              Participation globale de l'année passée
+            <Typography variant="h5" sx={{ mb: 3, color: '#000' }}>
+              PARTICIPATION GLOBALE DE L'ANNÉE PASSÉE
             </Typography>
             {isLoading ? (
               <Box sx={{ 
@@ -431,7 +452,7 @@ const GitContributions: React.FC = () => {
                     const colorScale = getColorScale(value.count);
                     return `${colorScale} ${user?.platform || 'github'}`;
                   }}
-                  titleForValue={value => (!value ? 'Pas de contributions' : `${value.count} contributions le ${value.date}`)}
+                  titleForValue={value => value ? `${value.count} contributions le ${new Date(value.date).toLocaleDateString('fr-FR')}` : 'Pas de contributions'}
                   showWeekdayLabels={true}
                   gutterSize={4}
                 />
@@ -478,12 +499,38 @@ const GitContributions: React.FC = () => {
               <Grid container spacing={3}>
                 {displayUsers.map((user, index) => (
                   <Grid item xs={12} key={`${user.platform}-${user.username}-${index}`}>
-                    <Box sx={{ p: 2, border: '1px solid #ddd', borderRadius: 1 }}>
+                    <Box sx={{ 
+                      p: 2, 
+                      borderRadius: 1,
+                      '& .react-calendar-heatmap': {
+                        width: '100%',
+                        height: '200px'
+                      },
+                      '& .react-calendar-heatmap-small-rect': {
+                        width: '10px',
+                        height: '10px'
+                      }
+                    }}>
+                      <CalendarHeatmap
+                        startDate={getOneYearAgo()}
+                        endDate={new Date()}
+                        values={contributions[`${user.platform}-${user.username}`] || []}
+                        classForValue={(value) => {
+                          if (!value || value.count === 0) return 'color-empty';
+                          const scale = value.count <= 3 ? 1 : 
+                                      value.count <= 6 ? 2 : 
+                                      value.count <= 9 ? 3 : 4;
+                          return `color-scale-${scale} ${user.platform}`;
+                        }}
+                        titleForValue={value => value ? `${value.count} contributions le ${new Date(value.date).toLocaleDateString('fr-FR')}` : 'Pas de contributions'}
+                        showWeekdayLabels={true}
+                        gutterSize={2}
+                      />
                       <Box sx={{ 
                         display: 'flex', 
-                        alignItems: 'center', 
-                        gap: 2,
-                        mb: 2
+                        justifyContent: 'center',
+                        mt: 0,
+                        mb: 8
                       }}>
                         <a 
                           href={`https://${user.platform}.com/${user.username}`}
@@ -513,32 +560,6 @@ const GitContributions: React.FC = () => {
                           {user.username}
                         </a>
                       </Box>
-                      <Box sx={{ 
-                        pl: 4,
-                        '& .react-calendar-heatmap': {
-                          width: '100%',
-                          height: '140px'
-                        },
-                        '& .react-calendar-heatmap-small-rect': {
-                          width: '10px',
-                          height: '10px'
-                        }
-                      }}>
-                        <CalendarHeatmap
-                          startDate={getOneYearAgo()}
-                          endDate={new Date()}
-                          values={contributions[`${user.platform}-${user.username}`] || []}
-                          classForValue={(value) => {
-                            if (!value) return 'color-empty';
-                            const colorScale = getColorScale(value.count);
-                            const platform = user.platform;
-                            return `${colorScale} ${platform}`;
-                          }}
-                          titleForValue={value => (!value ? 'Pas de contributions' : `${value.count} contributions le ${value.date}`)}
-                          showWeekdayLabels={true}
-                          gutterSize={2}
-                        />
-                      </Box>
                     </Box>
                   </Grid>
                 ))}
@@ -547,6 +568,11 @@ const GitContributions: React.FC = () => {
           </Box>
         </Box>
       </Container>
+      <ShareModal 
+        open={shareModalOpen}
+        onClose={() => setShareModalOpen(false)}
+        url={readOnlyUrl}
+      />
     </>
   );
 };

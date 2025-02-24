@@ -30,10 +30,39 @@ export class UrlService {
   }
 
   static updateURL(users: User[], firstName: string, lastName: string, readonly: boolean = false): string {
-    const userParams = users.map(user => 
-      this.encodeUserData(user, firstName, lastName, readonly)
-    ).join(',');
-    return `/contributions/${userParams}`;
+    const compressedData = {
+      f: firstName,
+      l: lastName,
+      r: readonly,
+      u: users.map(user => ({
+        p: user.platform,
+        n: user.username,
+        t: user.token
+      }))
+    };
+    
+    const encoded = btoa(JSON.stringify(compressedData));
+    return `/contributions/${encoded}`;
+  }
+
+  static decodeURL(encodedData: string): { users: User[], firstName: string, lastName: string, readonly: boolean } {
+    try {
+      const decoded = JSON.parse(atob(encodedData));
+      return {
+        firstName: decoded.f,
+        lastName: decoded.l,
+        readonly: decoded.r || false,
+        users: decoded.u.map((u: any) => ({
+          platform: u.p,
+          username: u.n,
+          token: u.t,
+          id: Math.random()
+        }))
+      };
+    } catch (error) {
+      console.error('Erreur lors du décodage de l\'URL:', error);
+      return { users: [], firstName: '', lastName: '', readonly: false };
+    }
   }
 
   static getReadOnlyUrl(users: User[], firstName: string, lastName: string): string {
