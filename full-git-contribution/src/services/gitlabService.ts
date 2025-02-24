@@ -36,7 +36,6 @@ export const fetchGitlabContributions = async (username: string, token?: string)
       );
 
       const events = eventsResponse.data;
-      console.log(`Événements GitLab récupérés (page ${page}):`, events.length);
 
       if (events.length === 0) {
         hasMoreData = false;
@@ -67,7 +66,6 @@ export const fetchGitlabContributions = async (username: string, token?: string)
       .map(([date, count]) => ({ date, count }))
       .sort((a, b) => a.date.localeCompare(b.date));
 
-    console.log('Contributions GitLab finales:', contributions);
     return contributions;
 
   } catch (error) {

@@ -1,5 +1,9 @@
 import { User } from '../types';
 
+const BASE_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://agc.meakuumi.com'
+  : 'http://localhost:3000';
+
 export class UrlService {
   static encodeUserData(user: User, firstName: string, lastName: string, readonly: boolean = false): string {
     const data = `${user.platform}:${user.username}:${firstName}:${lastName}${user.token ? ':' + user.token : ''}:${readonly}`;
@@ -29,44 +33,87 @@ export class UrlService {
     };
   }
 
-  static updateURL(users: User[], firstName: string, lastName: string, readonly: boolean = false): string {
-    const compressedData = {
-      f: firstName,
-      l: lastName,
-      r: readonly,
-      u: users.map(user => ({
-        p: user.platform,
-        n: user.username,
-        t: user.token
+  static encodeURL(users: User[], firstName: string, lastName: string, readonly: boolean = false): string {
+    const data = {
+      profile: {
+        firstName: firstName || '',
+        lastName: lastName || '',
+        readonly: readonly
+      },
+      accounts: users.map(user => ({
+        platform: user.platform,
+        username: user.username,
+        token: user.token || ''
       }))
     };
-    
-    const encoded = btoa(JSON.stringify(compressedData));
-    return `/contributions/${encoded}`;
+    return btoa(encodeURIComponent(JSON.stringify(data)));
   }
 
   static decodeURL(encodedData: string): { users: User[], firstName: string, lastName: string, readonly: boolean } {
     try {
-      const decoded = JSON.parse(atob(encodedData));
-      return {
-        firstName: decoded.f,
-        lastName: decoded.l,
-        readonly: decoded.r || false,
-        users: decoded.u.map((u: any) => ({
-          platform: u.p,
-          username: u.n,
-          token: u.t,
-          id: Math.random()
-        }))
-      };
+      try {
+        const decoded = JSON.parse(decodeURIComponent(atob(encodedData)));
+        const firstName = decoded.profile?.firstName || '';
+        const lastName = decoded.profile?.lastName || '';
+        
+        return {
+          firstName,
+          lastName,
+          readonly: Boolean(decoded.profile?.readonly),
+          users: Array.isArray(decoded.accounts) ? decoded.accounts.map((u: any) => ({
+            platform: u.platform || 'github',
+            username: u.username || '',
+            token: u.token || '',
+            id: Math.random(),
+            firstName,
+            lastName
+          })) : []
+        };
+      } catch {
+        const decoded = encodedData.split(',').map(str => {
+          const decodedStr = atob(str);
+          const [platform, username, firstName, lastName, token, readonly] = decodedStr.split(':');
+          return {
+            platform,
+            username,
+            firstName,
+            lastName,
+            token,
+            readonly: readonly === 'true'
+          };
+        });
+
+        const firstName = decoded[0]?.firstName || '';
+        const lastName = decoded[0]?.lastName || '';
+
+        return {
+          firstName,
+          lastName,
+          readonly: decoded[0]?.readonly || false,
+          users: decoded.map((d, index) => ({
+            platform: d.platform as 'github' | 'gitlab',
+            username: d.username || '',
+            token: d.token || '',
+            id: index + 1,
+            firstName,
+            lastName
+          }))
+        };
+      }
     } catch (error) {
       console.error('Erreur lors du décodage de l\'URL:', error);
       return { users: [], firstName: '', lastName: '', readonly: false };
     }
   }
 
+  static updateURL(users: User[], firstName: string, lastName: string, readonly: boolean = false): string {
+    const encodedData = this.encodeURL(users, firstName, lastName, readonly);
+    return `/contributions/${encodedData}`;
+  }
+
   static getReadOnlyUrl(users: User[], firstName: string, lastName: string): string {
-    return `${window.location.origin}${this.updateURL(users, firstName, lastName, true)}`;
+    const path = this.updateURL(users, firstName, lastName, true);
+    return `${BASE_URL}${path}`;
   }
 
   static parseUrlUsers(urlUsers: string | undefined): {

@@ -47,8 +47,6 @@ export const fetchGithubContributions = async (username: string, token?: string)
         count: day.contributionCount
       }))
     );
-
-    console.log('Contributions GitHub détaillées pour', username, ':', contributions);
     return contributions;
 
   } catch (error) {

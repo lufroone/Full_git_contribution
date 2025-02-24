@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Box, TextField, Button, Grid, Typography, Container, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
-import CalendarHeatmap, { TooltipDataAttrs } from 'react-calendar-heatmap';
+import CalendarHeatmap from 'react-calendar-heatmap';
 import 'react-calendar-heatmap/dist/styles.css';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import { fetchGithubContributions } from '../services/githubService';
 import { fetchGitlabContributions } from '../services/gitlabService';
-import { BaseUser, User, ContributionDay } from '../types';
+import { User, ContributionDay } from '../types';
 import { UrlService } from '../services/urlService';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ShareModal from '../components/ShareModal';
+import ErrorPopup from '../components/ErrorPopup';
 
 interface DisplayUser extends User {
   firstName: string;
@@ -24,7 +25,6 @@ const GitContributions: React.FC = () => {
   const [newToken, setNewToken] = useState('');
   const [selectedPlatform, setSelectedPlatform] = useState<'github' | 'gitlab'>('github');
   const [contributions, setContributions] = useState<{[key: string]: ContributionDay[]}>({});
-  const [expandedUsers, setExpandedUsers] = useState<number[]>([]);
   const [showDetails, setShowDetails] = useState(false);
   const [showAddForm, setShowAddForm] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
@@ -33,24 +33,29 @@ const GitContributions: React.FC = () => {
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [readOnlyUrl, setReadOnlyUrl] = useState('');
+  const [error, setError] = useState<string>('');
   const navigate = useNavigate();
 
   const { users: urlUsers } = useParams();
 
   const handleAddUser = () => {
     if (newUsername.trim()) {
-      const newUser: DisplayUser = {
+      const newUser: User = {
         id: nextId,
         platform: selectedPlatform,
         username: newUsername.trim(),
         token: newToken.trim() || undefined,
-        firstName,
-        lastName
+        firstName: firstName,
+        lastName: lastName
       };
 
       const updatedUsers = [...users, newUser];
       setUsers(updatedUsers);
-      setDisplayUsers(prev => [...prev, newUser]);
+      setDisplayUsers(prev => [...prev, {
+        ...newUser,
+        firstName,
+        lastName
+      }]);
       setNextId(nextId + 1);
       setNewUsername('');
       setNewToken('');
@@ -73,57 +78,62 @@ const GitContributions: React.FC = () => {
   };
 
   useEffect(() => {
-    const { users: parsedUsers, firstName: parsedFirstName, lastName: parsedLastName, readonly } = 
-      UrlService.parseUrlUsers(urlUsers);
-    
-    if (parsedUsers.length > 0) {
-      setUsers(parsedUsers);
-      setDisplayUsers(parsedUsers.map(user => ({
-        ...user,
-        firstName: parsedFirstName,
-        lastName: parsedLastName
-      })));
-      setFirstName(parsedFirstName);
-      setLastName(parsedLastName);
-      setNextId(parsedUsers.length + 1);
-      setIsReadOnly(readonly);
+    if (urlUsers) {
+      const { users: parsedUsers, firstName: parsedFirstName, lastName: parsedLastName, readonly } = 
+        UrlService.decodeURL(urlUsers);
+      
+      if (parsedUsers.length > 0) {
+        setUsers(parsedUsers);
+        setDisplayUsers(parsedUsers.map(user => ({
+          ...user,
+          firstName: parsedFirstName,
+          lastName: parsedLastName
+        })));
+        setFirstName(parsedFirstName);
+        setLastName(parsedLastName);
+        setNextId(parsedUsers.length + 1);
+        setIsReadOnly(readonly);
+      }
     }
   }, [urlUsers]);
 
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
+      setError('');
       const newContributions: {[key: string]: ContributionDay[]} = {};
 
-      for (const user of users) {
-        const contributionKey = `${user.platform}-${user.username}`;
-        
-        if (user.platform === 'github') {
-          const userContributions = await fetchGithubContributions(user.username, user.token);
-          newContributions[contributionKey] = userContributions;
-        } else if (user.platform === 'gitlab') {
-          const userContributions = await fetchGitlabContributions(user.username, user.token);
-          newContributions[contributionKey] = userContributions;
+      try {
+        for (const user of users) {
+          const contributionKey = `${user.platform}-${user.username}`;
+          
+          if (user.platform === 'github') {
+            const userContributions = await fetchGithubContributions(user.username, user.token);
+            if (userContributions.length === 0) {
+              throw new Error(`Impossible de récupérer les contributions GitHub pour ${user.username}`);
+            }
+            newContributions[contributionKey] = userContributions;
+          } else if (user.platform === 'gitlab') {
+            const userContributions = await fetchGitlabContributions(user.username, user.token);
+            if (userContributions.length === 0) {
+              throw new Error(`Impossible de récupérer les contributions GitLab pour ${user.username}`);
+            }
+            newContributions[contributionKey] = userContributions;
+          }
         }
+        
+        setContributions(newContributions);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Erreur lors de la récupération des contributions');
+      } finally {
+        setIsLoading(false);
       }
-
-      setContributions(newContributions);
-      setIsLoading(false);
     };
 
     if (users.length > 0) {
       fetchData();
     }
   }, [users]);
-
-  const handleInputChange = (
-    type: 'username' | 'token' | 'platform',
-    value: string
-  ) => {
-    if (type === 'username') setNewUsername(value);
-    if (type === 'token') setNewToken(value);
-    if (type === 'platform') setSelectedPlatform(value as 'github' | 'gitlab');
-  };
 
   const handleRemoveUser = (index: number) => {
     const updatedUsers = users.filter((_, i) => i !== index);
@@ -133,10 +143,8 @@ const GitContributions: React.FC = () => {
     setDisplayUsers(updatedDisplayUsers);
 
     if (updatedUsers.length === 0) {
-      // Si plus d'utilisateurs, redirection vers la page de base
       navigate('/contributions');
     } else {
-      // Mise à jour de l'URL avec les utilisateurs restants
       const newUrl = UrlService.updateURL(updatedUsers, firstName, lastName);
       navigate(newUrl, { replace: true });
     }
@@ -155,14 +163,6 @@ const GitContributions: React.FC = () => {
     return new Date(today.setFullYear(today.getFullYear() - 1));
   };
 
-  const toggleUserDetails = (index: number) => {
-    setExpandedUsers(prev => 
-      prev.includes(index) 
-        ? prev.filter(i => i !== index)
-        : [...prev, index]
-    );
-  };
-
   const handleCopyReadOnlyLink = () => {
     const readOnlyUrl = UrlService.getReadOnlyUrl(users, firstName, lastName);
     navigator.clipboard.writeText(readOnlyUrl);
@@ -174,14 +174,9 @@ const GitContributions: React.FC = () => {
     setShareModalOpen(true);
   };
 
-  const theme = {
-    typography: {
-      fontFamily: 'Montserrat, sans-serif',
-    }
-  };
-
   return (
     <>
+      {error && <ErrorPopup message={error} />}
       <Header 
         displayUsers={displayUsers}
         onUserInfoChange={handleUserInfoChange}

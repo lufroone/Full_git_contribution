@@ -1,15 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { 
   AppBar, 
   Toolbar, 
   Typography, 
   Box, 
-  TextField,
-  Button
+  TextField
 } from '@mui/material';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { User } from '../types';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
 interface HeaderProps {
   displayUsers: User[];
@@ -25,11 +23,9 @@ const Header: React.FC<HeaderProps> = ({
   onUserInfoChange, 
   firstName, 
   lastName, 
-  readonly,
-  onCopyReadOnlyLink 
+  readonly
 }) => {
   const navigate = useNavigate();
-  const location = useLocation();
 
   const updateUrlWithUserInfo = (newFirstName: string, newLastName: string) => {
     if (displayUsers.length > 0) {
@@ -64,14 +60,19 @@ const Header: React.FC<HeaderProps> = ({
         <Typography 
           variant="h6" 
           component="div" 
+          onClick={() => navigate('/')}
           sx={{ 
             color: '#333',
             fontWeight: 600,
             fontSize: '1.8rem',
-            fontFamily: 'Montserrat, sans-serif'
+            fontFamily: 'Montserrat, sans-serif',
+            cursor: 'pointer',
+            '&:hover': {
+              opacity: 0.8
+            }
           }}
         >
-          GIT CONTRIBUTIONS
+          ALL GIT CONTRIBUTIONS
         </Typography>
 
         <Box sx={{ 
@@ -80,18 +81,16 @@ const Header: React.FC<HeaderProps> = ({
           gap: 2 
         }}>
           {readonly ? (
-            <>
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  color: '#333',
-                  fontSize: '1.4rem',
-                  fontWeight: 500
-                }}
-              >
-                {firstName} {lastName}
-              </Typography>
-            </>
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                color: '#333',
+                fontSize: '1.4rem',
+                fontWeight: 500
+              }}
+            >
+              {firstName} {lastName}
+            </Typography>
           ) : (
             <>
               <TextField
