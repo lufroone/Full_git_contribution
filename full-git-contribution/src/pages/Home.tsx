@@ -49,7 +49,7 @@ const Home: React.FC = () => {
         <LogoAnimation />
         
         <Typography variant="h2" component="h1" gutterBottom>
-          Full Git Contributions
+          All Git Contributions
         </Typography>
         
         <Typography variant="h5" component="h2" color="text.secondary" gutterBottom>
