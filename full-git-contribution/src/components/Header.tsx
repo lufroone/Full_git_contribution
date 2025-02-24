@@ -1,56 +1,110 @@
-import React from 'react';
-import { AppBar, Toolbar, Typography, Box } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-
-interface User {
-  platform: 'github' | 'gitlab';
-  username: string;
-  token?: string;
-  id: number;
-  firstName: string;
-  lastName: string;
-}
-
-interface DisplayUser extends User {
-  firstName: string;
-  lastName: string;
-}
+import React, { useState, useEffect } from 'react';
+import { 
+  AppBar, 
+  Toolbar, 
+  Typography, 
+  Box, 
+  TextField,
+  Button
+} from '@mui/material';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { User } from '../types';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
 interface HeaderProps {
-  displayUsers: DisplayUser[];
+  displayUsers: User[];
+  onUserInfoChange: (firstName: string, lastName: string) => void;
+  firstName: string;
+  lastName: string;
+  readonly: boolean;
+  onCopyReadOnlyLink?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ displayUsers }) => {
+const Header: React.FC<HeaderProps> = ({ 
+  displayUsers, 
+  onUserInfoChange, 
+  firstName, 
+  lastName, 
+  readonly,
+  onCopyReadOnlyLink 
+}) => {
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const generateShareableUrl = () => {
-    const userParams = displayUsers.map(user => 
-      btoa(`${user.platform}:${user.username}${user.token ? ':' + user.token : ''}`)
-    ).join(',');
-    return `/contributions/${userParams}`;
+  const updateUrlWithUserInfo = (newFirstName: string, newLastName: string) => {
+    if (displayUsers.length > 0) {
+      const userParams = displayUsers.map(user => 
+        btoa(`${user.platform}:${user.username}:${newFirstName}:${newLastName}${user.token ? ':' + user.token : ''}`)
+      ).join(',');
+      navigate(`/contributions/${userParams}`, { replace: true });
+    }
   };
 
-  React.useEffect(() => {
-    if (displayUsers.length > 0) {
-      navigate(generateShareableUrl(), { replace: true });
-    }
-  }, [displayUsers]);
+  const handleFirstNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onUserInfoChange(e.target.value, lastName);
+    updateUrlWithUserInfo(e.target.value, lastName);
+  };
+
+  const handleLastNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onUserInfoChange(firstName, e.target.value);
+    updateUrlWithUserInfo(firstName, e.target.value);
+  };
 
   return (
-    <AppBar position="static">
-      <Toolbar>
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+    <AppBar position="static" sx={{ 
+      backgroundColor: 'white', 
+      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+    }}>
+      <Toolbar sx={{ justifyContent: 'space-between' }}>
+        <Typography 
+          variant="h6" 
+          component="div" 
+          sx={{ 
+            color: '#333',
+            fontWeight: 600,
+            fontSize: '1.5rem'
+          }}
+        >
           Git Contributions
         </Typography>
-        {displayUsers.length > 0 && (
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            {displayUsers.map((user, index) => (
-              <Typography key={index} variant="body1">
-                {user.firstName} {user.lastName}
+
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 2 
+        }}>
+          {readonly ? (
+            <>
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  color: '#333',
+                  fontSize: '1.2rem',
+                  fontWeight: 500
+                }}
+              >
+                {firstName} {lastName}
               </Typography>
-            ))}
-          </Box>
-        )}
+            </>
+          ) : (
+            <>
+              <TextField
+                size="small"
+                label="Prénom"
+                value={firstName}
+                onChange={handleFirstNameChange}
+                sx={{ backgroundColor: '#f5f5f5', borderRadius: '4px' }}
+              />
+              <TextField
+                size="small"
+                label="Nom"
+                value={lastName}
+                onChange={handleLastNameChange}
+                sx={{ backgroundColor: '#f5f5f5', borderRadius: '4px' }}
+              />
+            </>
+          )}
+        </Box>
       </Toolbar>
     </AppBar>
   );

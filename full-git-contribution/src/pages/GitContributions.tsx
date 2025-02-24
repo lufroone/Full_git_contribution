@@ -2,26 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { Box, TextField, Button, Grid, Typography, Container, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
 import CalendarHeatmap from 'react-calendar-heatmap';
 import 'react-calendar-heatmap/dist/styles.css';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import { fetchGithubContributions } from '../services/githubService';
 import { fetchGitlabContributions } from '../services/gitlabService';
-
-interface User {
-  platform: 'github' | 'gitlab';
-  username: string;
-  token?: string;
-  id: number;
-}
+import { BaseUser, User, ContributionDay } from '../types';
+import { UrlService } from '../services/urlService';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
 interface DisplayUser extends User {
   firstName: string;
   lastName: string;
-}
-
-interface ContributionDay {
-  date: string;
-  count: number;
 }
 
 const GitContributions: React.FC = () => {
@@ -36,36 +27,63 @@ const GitContributions: React.FC = () => {
   const [showDetails, setShowDetails] = useState(false);
   const [showAddForm, setShowAddForm] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [isReadOnly, setIsReadOnly] = useState(false);
+  const navigate = useNavigate();
 
   const { users: urlUsers } = useParams();
 
-  const encodeUserData = (platform: string, username: string, token?: string) => {
-    const data = `${platform}:${username}${token ? ':' + token : ''}`;
-    return btoa(data);
+  const handleAddUser = () => {
+    if (newUsername.trim()) {
+      const newUser: DisplayUser = {
+        id: nextId,
+        platform: selectedPlatform,
+        username: newUsername.trim(),
+        token: newToken.trim() || undefined,
+        firstName,
+        lastName
+      };
+
+      const updatedUsers = [...users, newUser];
+      setUsers(updatedUsers);
+      setDisplayUsers(prev => [...prev, newUser]);
+      setNextId(nextId + 1);
+      setNewUsername('');
+      setNewToken('');
+      
+      const newUrl = UrlService.updateURL(updatedUsers, firstName, lastName);
+      navigate(newUrl, { replace: true });
+    }
   };
 
-  const decodeUserData = (encodedString: string): User => {
-    const decodedString = atob(encodedString);
-    const [platform, username, token] = decodedString.split(':');
-    return {
-      id: 0,
-      platform: platform as 'github' | 'gitlab',
-      username: username || '',
-      token
-    };
+  const handleUserInfoChange = (newFirstName: string, newLastName: string) => {
+    setFirstName(newFirstName);
+    setLastName(newLastName);
+    setDisplayUsers(prev => prev.map(user => ({
+      ...user,
+      firstName: newFirstName,
+      lastName: newLastName
+    })));
+    const newUrl = UrlService.updateURL(users, newFirstName, newLastName);
+    navigate(newUrl, { replace: true });
   };
 
   useEffect(() => {
-    if (urlUsers) {
-      const parsedUsers = urlUsers.split(',').map((encodedString, index) => {
-        const userData = decodeUserData(encodedString);
-        return {
-          ...userData,
-          id: index + 1 // Ajoute un ID unique pour chaque utilisateur
-        };
-      });
+    const { users: parsedUsers, firstName: parsedFirstName, lastName: parsedLastName, readonly } = 
+      UrlService.parseUrlUsers(urlUsers);
+    
+    if (parsedUsers.length > 0) {
       setUsers(parsedUsers);
-      setNextId(parsedUsers.length + 1); // Met à jour le prochain ID disponible
+      setDisplayUsers(parsedUsers.map(user => ({
+        ...user,
+        firstName: parsedFirstName,
+        lastName: parsedLastName
+      })));
+      setFirstName(parsedFirstName);
+      setLastName(parsedLastName);
+      setNextId(parsedUsers.length + 1);
+      setIsReadOnly(readonly);
     }
   }, [urlUsers]);
 
@@ -104,25 +122,21 @@ const GitContributions: React.FC = () => {
     if (type === 'platform') setSelectedPlatform(value as 'github' | 'gitlab');
   };
 
-  const handleAddUser = () => {
-    if (newUsername.trim()) {
-      const newUser: User = {
-        id: nextId,
-        platform: selectedPlatform,
-        username: newUsername.trim(),
-        token: newToken.trim() || undefined
-      };
-
-      setUsers(prevUsers => [...prevUsers, newUser]);
-      setNextId(nextId + 1);
-      setNewUsername('');
-      setNewToken('');
-      setShowAddForm(false);
-    }
-  };
-
   const handleRemoveUser = (index: number) => {
-    setUsers(users.filter((_, i) => i !== index));
+    const updatedUsers = users.filter((_, i) => i !== index);
+    const updatedDisplayUsers = displayUsers.filter((_, i) => i !== index);
+    
+    setUsers(updatedUsers);
+    setDisplayUsers(updatedDisplayUsers);
+
+    if (updatedUsers.length === 0) {
+      // Si plus d'utilisateurs, redirection vers la page de base
+      navigate('/contributions');
+    } else {
+      // Mise à jour de l'URL avec les utilisateurs restants
+      const newUrl = UrlService.updateURL(updatedUsers, firstName, lastName);
+      navigate(newUrl, { replace: true });
+    }
   };
 
   const getColorScale = (count: number) => {
@@ -146,13 +160,44 @@ const GitContributions: React.FC = () => {
     );
   };
 
+  const handleCopyReadOnlyLink = () => {
+    const readOnlyUrl = UrlService.getReadOnlyUrl(users, firstName, lastName);
+    navigator.clipboard.writeText(readOnlyUrl);
+  };
+
   return (
     <>
-      <Header displayUsers={displayUsers} />
+      <Header 
+        displayUsers={displayUsers}
+        onUserInfoChange={handleUserInfoChange}
+        firstName={firstName}
+        lastName={lastName}
+        readonly={isReadOnly}
+      />
       <Container maxWidth="lg">
         <Box sx={{ py: 4 }}>
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'flex-end',
+            mb: 2
+          }}>
+            {!isReadOnly && (
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={handleCopyReadOnlyLink}
+                startIcon={<ContentCopyIcon />}
+              >
+                Copier lien lecture seule
+              </Button>
+            )}
+          </Box>
+
           <Typography variant="h4" gutterBottom>
-            Visualisation des Contributions
+            {isReadOnly 
+              ? `Contributions de ${firstName} ${lastName}`
+              : 'Vos Comptes'
+            }
           </Typography>
 
           <Box sx={{ 
@@ -163,47 +208,119 @@ const GitContributions: React.FC = () => {
             transition: 'all 0.3s ease'
           }}>
             {displayUsers.map((user, index) => (
-              <Box key={index} sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                <FormControl sx={{ minWidth: 120 }} size="small">
-                  <InputLabel>Plateforme</InputLabel>
-                  <Select
-                    value={user.platform}
-                    label="Plateforme"
-                    disabled
+              <Box key={index} sx={{ 
+                display: 'flex', 
+                justifyContent: 'center',
+                alignItems: 'center', 
+                gap: 2,
+                mt: 1,
+                mb: 1
+              }}>
+                {isReadOnly ? (
+                  <Typography variant="h5">
+                    {user.platform === 'github' ? (
+                      <a 
+                        href={`https://github.com/${user.username}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ 
+                          color: '#24292e',
+                          textDecoration: 'none',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          fontSize: '1.5rem',
+                          padding: '12px 24px',
+                          borderRadius: '8px',
+                          transition: 'all 0.2s ease',
+                          backgroundColor: '#f6f8fa',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                          minWidth: '300px',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        <img 
+                          src="https://github.com/favicon.ico" 
+                          alt="GitHub" 
+                          style={{ width: '24px', height: '24px' }}
+                        />
+                        {user.username}
+                      </a>
+                    ) : (
+                      <a 
+                        href={`https://gitlab.com/${user.username}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ 
+                          color: '#fc6d26',
+                          textDecoration: 'none',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          fontSize: '1.5rem',
+                          padding: '12px 24px',
+                          borderRadius: '8px',
+                          transition: 'all 0.2s ease',
+                          backgroundColor: '#fdf4f1',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                          minWidth: '300px',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        <img 
+                          src="https://gitlab.com/favicon.ico" 
+                          alt="GitLab" 
+                          style={{ width: '24px', height: '24px' }}
+                        />
+                        {user.username}
+                      </a>
+                    )}
+                  </Typography>
+                ) : (
+                  <>
+                    <FormControl sx={{ minWidth: 120 }} size="small">
+                      <InputLabel>Plateforme</InputLabel>
+                      <Select
+                        value={user.platform}
+                        label="Plateforme"
+                        disabled
+                      >
+                        <MenuItem value={user.platform}>
+                          {user.platform === 'github' ? 'GitHub' : 'GitLab'}
+                        </MenuItem>
+                      </Select>
+                    </FormControl>
+
+                    <TextField
+                      value={user.username}
+                      label="Nom d'utilisateur"
+                      size="small"
+                      disabled
+                    />
+                  </>
+                )}
+
+                {!isReadOnly && (
+                  <Button 
+                    size="small" 
+                    color="error" 
+                    onClick={() => handleRemoveUser(index)}
                   >
-                    <MenuItem value={user.platform}>
-                      {user.platform === 'github' ? 'GitHub' : 'GitLab'}
-                    </MenuItem>
-                  </Select>
-                </FormControl>
-
-                <TextField
-                  value={user.username}
-                  label="Nom d'utilisateur"
-                  size="small"
-                  disabled
-                />
-
-                <TextField
-                  value={user.token || ''}
-                  label="Token"
-                  type="password"
-                  size="small"
-                  disabled
-                />
-
-                <Button 
-                  size="small" 
-                  color="error" 
-                  onClick={() => handleRemoveUser(index)}
-                >
-                  Supprimer
-                </Button>
+                    Supprimer
+                  </Button>
+                )}
               </Box>
             ))}
 
-            {showAddForm && (
-              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 3 }}>
+            {!isReadOnly && showAddForm && (
+              <Box sx={{ 
+                display: 'flex', 
+                gap: 2, 
+                alignItems: 'center',
+                justifyContent: 'center',
+                mt: 4,
+                mb: 2
+              }}>
                 <FormControl sx={{ minWidth: 120 }}>
                   <InputLabel>Plateforme</InputLabel>
                   <Select
@@ -228,21 +345,21 @@ const GitContributions: React.FC = () => {
                   value={newToken}
                   onChange={(e) => setNewToken(e.target.value)}
                   label="Token (optionnel)"
-                  type="password"
                   size="small"
+                  type="password"
                 />
 
-                <Button 
-                  onClick={handleAddUser}
+                <Button
                   variant="contained"
-                  disabled={!newUsername.trim()}
+                  onClick={handleAddUser}
+                  size="small"
                 >
                   Ajouter
                 </Button>
               </Box>
             )}
 
-            {!showAddForm && (
+            {!isReadOnly && !showAddForm && (
               <Button 
                 onClick={() => setShowAddForm(true)}
                 variant="outlined"
@@ -262,16 +379,16 @@ const GitContributions: React.FC = () => {
           </Box>
 
           {/* Calendrier global */}
-          <Box sx={{ mb: 4, p: 2, border: '1px solid #ddd', borderRadius: 1 }}>
-            <Typography variant="h6" gutterBottom>
-              Vue d'ensemble des contributions
+          <Box sx={{ mt: 12, mb: 4 }}>
+            <Typography variant="h4" gutterBottom sx={{ mb: 4, mt: 4 }}>
+              Participation globale de l'année passée
             </Typography>
             {isLoading ? (
               <Box sx={{ 
                 display: 'flex', 
                 justifyContent: 'center', 
                 alignItems: 'center', 
-                height: '160px',
+                height: '250px',
                 backgroundColor: 'rgba(0, 0, 0, 0.04)',
                 borderRadius: 1
               }}>
@@ -281,28 +398,42 @@ const GitContributions: React.FC = () => {
               </Box>
             ) : (
               <Box sx={{ 
+                width: '100%',
                 '& .react-calendar-heatmap': {
                   width: '100%',
-                  height: '160px'
+                  height: '250px'
                 },
                 '& .react-calendar-heatmap-small-rect': {
-                  width: '10px',
-                  height: '10px'
+                  width: '14px',
+                  height: '14px'
                 },
-                '& .color-scale-1': { fill: '#cce4ff' },
-                '& .color-scale-2': { fill: '#99c9ff' },
-                '& .color-scale-3': { fill: '#66adff' },
-                '& .color-scale-4': { fill: '#3392ff' },
+                '& .color-scale-1.github': { fill: '#9be9a8' },
+                '& .color-scale-2.github': { fill: '#40c463' },
+                '& .color-scale-3.github': { fill: '#30a14e' },
+                '& .color-scale-4.github': { fill: '#216e39' },
+                '& .color-scale-1.gitlab': { fill: '#ffead7' },
+                '& .color-scale-2.gitlab': { fill: '#ffc591' },
+                '& .color-scale-3.gitlab': { fill: '#ff9d4d' },
+                '& .color-scale-4.gitlab': { fill: '#ff7400' },
                 '& .color-empty': { fill: '#ebedf0' }
               }}>
                 <CalendarHeatmap
                   startDate={getOneYearAgo()}
                   endDate={new Date()}
                   values={users.flatMap(user => contributions[`${user.platform}-${user.username}`] || [])}
-                  classForValue={value => (!value ? 'color-empty' : getColorScale(value.count))}
+                  classForValue={value => {
+                    if (!value) return 'color-empty';
+                    const user = users.find(u => 
+                      contributions[`${u.platform}-${u.username}`]?.some(c => 
+                        c.date === value.date && c.count === value.count
+                      )
+                    );
+                    const colorScale = getColorScale(value.count);
+                    return `${colorScale} ${user?.platform || 'github'}`;
+                  }}
                   titleForValue={value => (!value ? 'Pas de contributions' : `${value.count} contributions le ${value.date}`)}
                   showWeekdayLabels={true}
-                  gutterSize={2}
+                  gutterSize={4}
                 />
               </Box>
             )}
@@ -318,13 +449,26 @@ const GitContributions: React.FC = () => {
                 mb: 2,
                 py: 2,
                 borderRadius: 1,
-                backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                backgroundColor: 'transparent',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2
               }}
             >
-              <Typography variant="h6">Calendriers détaillés par utilisateur</Typography>
+              <Typography variant="h6" sx={{ color: '#666', whiteSpace: 'nowrap' }}>
+                Calendriers détaillés par utilisateur
+              </Typography>
+              <Box sx={{ 
+                flex: 1,
+                height: '1px',
+                backgroundColor: '#666'
+              }} />
               <Box sx={{ 
                 transform: showDetails ? 'rotate(180deg)' : 'none',
-                transition: 'transform 0.3s'
+                transition: 'transform 0.3s',
+                color: '#666',
+                display: 'flex',
+                alignItems: 'center'
               }}>
                 ▼
               </Box>
@@ -335,10 +479,42 @@ const GitContributions: React.FC = () => {
                 {displayUsers.map((user, index) => (
                   <Grid item xs={12} key={`${user.platform}-${user.username}-${index}`}>
                     <Box sx={{ p: 2, border: '1px solid #ddd', borderRadius: 1 }}>
-                      <Typography variant="h6" gutterBottom>
-                        {user.platform === 'github' ? 'GitHub' : 'GitLab'}: {user.username}
-                      </Typography>
                       <Box sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: 2,
+                        mb: 2
+                      }}>
+                        <a 
+                          href={`https://${user.platform}.com/${user.username}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ 
+                            color: user.platform === 'github' ? '#24292e' : '#fc6d26',
+                            textDecoration: 'none',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            fontSize: '1.5rem',
+                            padding: '12px 24px',
+                            borderRadius: '8px',
+                            transition: 'all 0.2s ease',
+                            backgroundColor: user.platform === 'github' ? '#f6f8fa' : '#fdf4f1',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                            minWidth: '300px',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          <img 
+                            src={`https://${user.platform}.com/favicon.ico`}
+                            alt={user.platform} 
+                            style={{ width: '24px', height: '24px' }}
+                          />
+                          {user.username}
+                        </a>
+                      </Box>
+                      <Box sx={{ 
+                        pl: 4,
                         '& .react-calendar-heatmap': {
                           width: '100%',
                           height: '140px'
@@ -346,25 +522,18 @@ const GitContributions: React.FC = () => {
                         '& .react-calendar-heatmap-small-rect': {
                           width: '10px',
                           height: '10px'
-                        },
-                        ...(user.platform === 'github' ? {
-                          '& .color-scale-1': { fill: '#ddd' },
-                          '& .color-scale-2': { fill: '#aaa' },
-                          '& .color-scale-3': { fill: '#666' },
-                          '& .color-scale-4': { fill: '#333' },
-                        } : {
-                          '& .color-scale-1': { fill: '#ffead7' },
-                          '& .color-scale-2': { fill: '#ffc591' },
-                          '& .color-scale-3': { fill: '#ff9d4d' },
-                          '& .color-scale-4': { fill: '#ff7400' },
-                        }),
-                        '& .color-empty': { fill: '#ebedf0' }
+                        }
                       }}>
                         <CalendarHeatmap
                           startDate={getOneYearAgo()}
                           endDate={new Date()}
                           values={contributions[`${user.platform}-${user.username}`] || []}
-                          classForValue={value => (!value ? 'color-empty' : getColorScale(value.count))}
+                          classForValue={(value) => {
+                            if (!value) return 'color-empty';
+                            const colorScale = getColorScale(value.count);
+                            const platform = user.platform;
+                            return `${colorScale} ${platform}`;
+                          }}
                           titleForValue={value => (!value ? 'Pas de contributions' : `${value.count} contributions le ${value.date}`)}
                           showWeekdayLabels={true}
                           gutterSize={2}

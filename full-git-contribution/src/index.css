@@ -2,10 +2,15 @@
   fill: #ebedf0;
 }
 
-.react-calendar-heatmap .color-scale-1 { fill: #9be9a8; }
-.react-calendar-heatmap .color-scale-2 { fill: #40c463; }
-.react-calendar-heatmap .color-scale-3 { fill: #30a14e; }
-.react-calendar-heatmap .color-scale-4 { fill: #216e39; }
+.react-calendar-heatmap .color-scale-1.github { fill: #9be9a8; }
+.react-calendar-heatmap .color-scale-2.github { fill: #40c463; }
+.react-calendar-heatmap .color-scale-3.github { fill: #30a14e; }
+.react-calendar-heatmap .color-scale-4.github { fill: #216e39; }
+
+.react-calendar-heatmap .color-scale-1.gitlab { fill: #ffead7; }
+.react-calendar-heatmap .color-scale-2.gitlab { fill: #ffc591; }
+.react-calendar-heatmap .color-scale-3.gitlab { fill: #ff9d4d; }
+.react-calendar-heatmap .color-scale-4.gitlab { fill: #ff7400; }
 
 .react-calendar-heatmap text {
   font-size: 6px;
