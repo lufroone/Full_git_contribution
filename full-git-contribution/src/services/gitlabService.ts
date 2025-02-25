@@ -5,6 +5,8 @@ interface ContributionDay {
   count: number;
 }
 
+const PER_PAGE = 100;
+
 export const fetchGitlabContributions = async (username: string, token?: string): Promise<ContributionDay[]> => {
   try {
     if (!token) {
@@ -18,7 +20,7 @@ export const fetchGitlabContributions = async (username: string, token?: string)
     };
 
     const contributionMap = new Map<string, number>();
-    let page = 1;
+    let page_counter = 1;
     let hasMoreData = true;
 
     while (hasMoreData) {
@@ -28,19 +30,15 @@ export const fetchGitlabContributions = async (username: string, token?: string)
           headers,
           params: {
             after: getOneYearAgo(),
-            per_page: 100,
-            page: page,
+            per_page: PER_PAGE,
+            page: page_counter,
             sort: 'desc'
           }
         }
       );
 
       const events = eventsResponse.data;
-
-      if (events.length === 0) {
-        hasMoreData = false;
-        break;
-      }
+      console.log(eventsResponse);
 
       events.forEach((event: any) => {
         if (!event || !event.created_at) return;
@@ -54,12 +52,10 @@ export const fetchGitlabContributions = async (username: string, token?: string)
         }
       });
 
-      page++;
+      page_counter++;
       
-      // Limite de sécurité pour éviter une boucle infinie
-      if (page > 10) {
+      if (events.length === 0 || events.length < PER_PAGE || page_counter > 10)
         hasMoreData = false;
-      }
     }
 
     const contributions = Array.from(contributionMap)
