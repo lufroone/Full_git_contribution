@@ -1,6 +1,6 @@
 import { User } from '../types';
 
-const BASE_URL = process.env.NODE_ENV === 'production' 
+const BASE_URL = import.meta.env.PROD 
   ? 'https://agc.meakuumi.com'
   : 'http://localhost:3000';
 

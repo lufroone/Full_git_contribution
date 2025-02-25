@@ -38,7 +38,7 @@ export const fetchGitlabContributions = async (username: string, token?: string)
       );
 
       const events = eventsResponse.data;
-      console.log(eventsResponse);
+      //console.log(eventsResponse);
 
       events.forEach((event: any) => {
         if (!event || !event.created_at) return;
