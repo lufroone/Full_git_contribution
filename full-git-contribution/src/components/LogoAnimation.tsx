@@ -66,17 +66,17 @@ const LogoAnimation: React.FC = () => {
       justifyContent: 'center',
       alignItems: 'center',
       perspective: '1200px',
-      height: '250px',
+      height: { xs: '70px', sm: '150px', md: '180px' },
       width: '100%',
       position: 'relative',
-      mb: 4
+      mb: { xs: 0.5, sm: 2, md: 3 }
     }}>
       <Box
         component="img"
         src={githubLogo}
         sx={{
-          maxWidth: '120px',
-          maxHeight: '120px',
+          maxWidth: { xs: '35px', sm: '80px', md: '100px' },
+          maxHeight: { xs: '35px', sm: '80px', md: '100px' },
           width: 'auto',
           height: 'auto',
           position: 'absolute',
@@ -86,7 +86,7 @@ const LogoAnimation: React.FC = () => {
           willChange: 'transform, z-index',
           backgroundColor: '#fff',
           borderRadius: '50%',
-          padding: '12px',
+          padding: { xs: '4px', sm: '8px', md: '10px' },
           objectFit: 'contain'
         }}
       />
@@ -94,8 +94,8 @@ const LogoAnimation: React.FC = () => {
         component="img"
         src={gitlabLogo}
         sx={{
-          maxWidth: '120px',
-          maxHeight: '120px',
+          maxWidth: { xs: '35px', sm: '80px', md: '100px' },
+          maxHeight: { xs: '35px', sm: '80px', md: '100px' },
           width: 'auto',
           height: 'auto',
           position: 'absolute',

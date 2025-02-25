@@ -35,51 +35,95 @@ const Home: React.FC = () => {
     >
       <Box 
         sx={{
-          height: '100vh',
+          minHeight: '100vh',
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'center',
+          justifyContent: 'space-between',
           alignItems: 'center',
           textAlign: 'center',
-          gap: 4,
+          gap: { xs: 2, sm: 2, md: 3 },
+          py: { xs: 3, sm: 4 },
           transition: 'transform 0.5s ease-in-out',
           transform: showTutorial ? 'translateY(-100vh)' : 'translateY(0)',
         }}
       >
-        <LogoAnimation />
-        
-        <Typography variant="h2" component="h1" gutterBottom>
-          All Git Contributions
-        </Typography>
-        
-        <Typography variant="h5" component="h2" color="text.secondary" gutterBottom>
-          Visualisez toutes vos contributions au même endroit de tous vos comptes de versionning au même endroit
-        </Typography>
+        <Box sx={{ 
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'flex-start',
+          alignItems: 'center',
+          gap: { xs: 0, sm: 1, md: 2 },
+          mt: { xs: 1, sm: 4, md: 6 }
+        }}>
+          <LogoAnimation />
+          
+          <Typography 
+            variant="h2" 
+            component="h1" 
+            gutterBottom
+            sx={{
+              fontSize: { xs: '2rem', sm: '2.5rem', md: '3.5rem' },
+              mb: { xs: 0, sm: 1 }
+            }}
+          >
+            All Git Contributions
+          </Typography>
+          
+          <Typography 
+            variant="h5" 
+            component="h2" 
+            color="text.secondary" 
+            gutterBottom
+            sx={{
+              fontSize: { xs: '1.1rem', sm: '1.3rem', md: '1.5rem' },
+              px: { xs: 2, sm: 4 },
+              mb: { xs: 0, sm: 1 }
+            }}
+          >
+            Visualisez toutes vos contributions au même endroit de tous vos comptes de versionning au même endroit
+          </Typography>
 
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-          Un outil simple pour montrer votre investissement et votre participation
-        </Typography>
+          <Typography 
+            variant="body1" 
+            color="text.secondary" 
+            sx={{ 
+              mb: { xs: 2, sm: 3 },
+              px: { xs: 2, sm: 4 }
+            }}
+          >
+            Un outil simple pour montrer votre investissement et votre participation
+          </Typography>
 
-        <Button 
-          component={Link} 
-          to="/contributions" 
-          variant="contained" 
-          size="large"
-          sx={{ fontSize: '1.2rem', padding: '12px 32px' }}
-        >
-          Créez votre profil
-        </Button>
+          <Box sx={{ mt: { xs: 2, sm: 3, md: 4 } }}>
+            <Button 
+              component={Link} 
+              to="/contributions" 
+              variant="contained" 
+              size="large"
+              sx={{ 
+                fontSize: { xs: '1rem', sm: '1.1rem', md: '1.2rem' },
+                padding: { xs: '8px 24px', sm: '10px 28px', md: '12px 32px' }
+              }}
+            >
+              Créez votre profil
+            </Button>
+          </Box>
+        </Box>
 
         <IconButton 
           onClick={handleScroll}
           sx={{ 
             position: 'absolute',
-            bottom: 20,
-            animation: 'bounce 1s infinite',
+            bottom: { xs: '8%', sm: '12%', md: '10%' },
+            left: '50%',
+            transform: 'translateX(-50%)',
+            animation: 'bounce 2s infinite',
             '@keyframes bounce': {
-              '0%, 100%': { transform: 'translateY(0)' },
-              '50%': { transform: 'translateY(10px)' }
-            }
+              '0%, 100%': { transform: 'translate(-50%, 0)' },
+              '50%': { transform: 'translate(-50%, 10px)' }
+            },
+            zIndex: 1
           }}
         >
           <KeyboardArrowDownIcon fontSize="large" />
@@ -94,21 +138,24 @@ const Home: React.FC = () => {
           justifyContent: 'center',
           alignItems: 'flex-start',
           textAlign: 'left',
-          gap: 4,
+          gap: { xs: 2, sm: 3, md: 4 },
           position: 'absolute',
           top: '100vh',
           left: 0,
           right: 0,
           transition: 'transform 0.5s ease-in-out',
           transform: showTutorial ? 'translateY(-100vh)' : 'translateY(0)',
-          padding: '0 32px'
+          padding: { xs: '16px', sm: '24px', md: '32px' },
+          '& > *': {
+            transform: 'translateY(-10%)'
+          }
         }}
       >
         <IconButton 
           onClick={handleScroll}
           sx={{ 
             position: 'absolute',
-            top: 20,
+            top: { xs: 10, sm: 15, md: 20 },
             left: '50%',
             transform: 'translateX(-50%)'
           }}
@@ -116,47 +163,101 @@ const Home: React.FC = () => {
           <KeyboardArrowUpIcon fontSize="large" />
         </IconButton>
 
-        <Typography variant="h3" component="h2" gutterBottom>
+        <Typography 
+          variant="h3" 
+          component="h2" 
+          gutterBottom
+          sx={{
+            fontSize: { xs: '1.8rem', sm: '2.2rem', md: '2.5rem' },
+            mt: { xs: 6, sm: 8, md: 10 }
+          }}
+        >
           Comment ça marche ?
         </Typography>
 
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-          Nous ne sauvegardons aucune donnée, toutes les informations de votre profil sont contenues dans votre URL de profil uniquement. De plus, le site ne permet pas la lecture de gitlab privé fermé à internet.
-        </Typography>
-
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4, maxWidth: '800px' }}>
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          gap: { xs: 2, sm: 3, md: 4 }, 
+          maxWidth: '800px',
+          width: '100%'
+        }}>
           <Box>
-            <Typography variant="h5" gutterBottom>
+            <Typography 
+              variant="h5" 
+              gutterBottom
+              sx={{
+                fontSize: { xs: '1.2rem', sm: '1.4rem', md: '1.5rem' }
+              }}
+            >
               1. Créez votre profil
             </Typography>
-            <Typography color="text.secondary">
+            <Typography 
+              color="text.secondary"
+              sx={{
+                fontSize: { xs: '0.9rem', sm: '1rem', md: '1.1rem' }
+              }}
+            >
               Cliquez sur le bouton, Créez votre profil et renseignez votre nom et prénom
             </Typography>
           </Box>
 
           <Box>
-            <Typography variant="h5" gutterBottom>
+            <Typography 
+              variant="h5" 
+              gutterBottom
+              sx={{
+                fontSize: { xs: '1.2rem', sm: '1.4rem', md: '1.5rem' }
+              }}
+            >
               2. Ajoutez vos comptes
             </Typography>
-            <Typography color="text.secondary">
+            <Typography 
+              color="text.secondary"
+              sx={{
+                fontSize: { xs: '0.9rem', sm: '1rem', md: '1.1rem' }
+              }}
+            >
               Connectez vos comptes GitHub et GitLab en utilisant vos identifiants et vos tokens d'accès personnels, avec uniquement les permissions read_user (gitlab) ou read:user (dans la catégorie user de github), aucune information n'est stocké sur le site donc à la date d'expiration du token il faudra le changer sur votre profil.
             </Typography>
           </Box>
 
           <Box>
-            <Typography variant="h5" gutterBottom>
+            <Typography 
+              variant="h5" 
+              gutterBottom
+              sx={{
+                fontSize: { xs: '1.2rem', sm: '1.4rem', md: '1.5rem' }
+              }}
+            >
               3. Visualisez vos contributions
             </Typography>
-            <Typography color="text.secondary">
+            <Typography 
+              color="text.secondary"
+              sx={{
+                fontSize: { xs: '0.9rem', sm: '1rem', md: '1.1rem' }
+              }}
+            >
               Observez toutes vos contributions sur un seul et même calendrier
             </Typography>
           </Box>
 
           <Box>
-            <Typography variant="h5" gutterBottom>
+            <Typography 
+              variant="h5" 
+              gutterBottom
+              sx={{
+                fontSize: { xs: '1.2rem', sm: '1.4rem', md: '1.5rem' }
+              }}
+            >
               4. Partagez votre profil
             </Typography>
-            <Typography color="text.secondary">
+            <Typography 
+              color="text.secondary"
+              sx={{
+                fontSize: { xs: '0.9rem', sm: '1rem', md: '1.1rem' }
+              }}
+            >
               Partagez votre profil avec vos collègues et vos clients pour montrer votre investissement et votre participation
             </Typography>
           </Box>
