@@ -34,7 +34,7 @@
     "start": "vite",
     "build": "tsc && vite build",
     "serve": "vite preview",
-    "deploy": "npm run build && rsync -avz build/ user@server:/var/www/afc/"
+    "deploy": "npm run build && rsync -avz build/ user@server:/var/www/agc/"
   },
   "eslintConfig": {
     "extends": [
