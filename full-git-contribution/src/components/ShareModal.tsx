@@ -30,12 +30,14 @@ const ShareModal: React.FC<ShareModalProps> = ({ open, onClose, url }) => {
       const img = new Image();
       
       img.onload = () => {
-        canvas.width = img.width * 4; // Augmente la qualité
-        canvas.height = img.height * 4;
+        const size = 600; // Taille plus grande
+        canvas.width = size;
+        canvas.height = size;
+        
         if (ctx) {
           ctx.fillStyle = 'white';
           ctx.fillRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0, size, size);
           
           const pngFile = canvas.toDataURL('image/png');
           const downloadLink = document.createElement('a');
@@ -72,15 +74,13 @@ const ShareModal: React.FC<ShareModalProps> = ({ open, onClose, url }) => {
         <QRCodeSVG
           ref={qrRef}
           value={fullUrl}
-          size={300}
+          size={400}
           level="M"
           style={{ 
-            margin: '20px 0',
-            padding: '20px',
             backgroundColor: 'white',
             borderRadius: '10px'
           }}
-          includeMargin={true}
+          includeMargin={false}
           bgColor="#FFFFFF"
           fgColor="#000000"
         />
