@@ -11,6 +11,7 @@ import { UrlService } from '../services/urlService';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ShareModal from '../components/ShareModal';
 import ErrorPopup from '../components/ErrorPopup';
+import { useLanguage } from '../hooks/useLanguage';
 
 interface DisplayUser extends User {
   firstName: string;
@@ -35,6 +36,7 @@ const GitContributions: React.FC = () => {
   const [readOnlyUrl, setReadOnlyUrl] = useState('');
   const [error, setError] = useState<string>('');
   const navigate = useNavigate();
+  const { t, language } = useLanguage();
 
   const { users: urlUsers } = useParams();
 
@@ -203,15 +205,15 @@ const GitContributions: React.FC = () => {
                   marginLeft: 'auto'
                 }}
               >
-                Partager
+                {t('gitContributions.share')}
               </Button>
             )}
           </Box>
 
           <Typography variant="h4" gutterBottom>
             {isReadOnly 
-              ? `CONTRIBUTIONS DE : ${firstName} ${lastName}`
-              : 'VOS COMPTES'
+              ? `${t('gitContributions.contributionsOf')}: ${firstName} ${lastName}`
+              : t('gitContributions.yourAccounts')
             }
           </Typography>
 
@@ -295,10 +297,10 @@ const GitContributions: React.FC = () => {
                 ) : (
                   <>
                     <FormControl sx={{ minWidth: 120 }} size="small">
-                      <InputLabel>Plateforme</InputLabel>
+                      <InputLabel>{t('gitContributions.platform')}</InputLabel>
                       <Select
                         value={user.platform}
-                        label="Plateforme"
+                        label={t('gitContributions.platform')}
                         disabled
                       >
                         <MenuItem value={user.platform}>
@@ -309,7 +311,7 @@ const GitContributions: React.FC = () => {
 
                     <TextField
                       value={user.username}
-                      label="Nom d'utilisateur"
+                      label={t('gitContributions.username')}
                       size="small"
                       disabled
                     />
@@ -322,7 +324,7 @@ const GitContributions: React.FC = () => {
                     color="error" 
                     onClick={() => handleRemoveUser(index)}
                   >
-                    Supprimer
+                    {t('gitContributions.remove')}
                   </Button>
                 )}
               </Box>
@@ -338,10 +340,10 @@ const GitContributions: React.FC = () => {
                 mb: 2
               }}>
                 <FormControl sx={{ minWidth: 120 }}>
-                  <InputLabel>Plateforme</InputLabel>
+                  <InputLabel>{t('gitContributions.platform')}</InputLabel>
                   <Select
                     value={selectedPlatform}
-                    label="Plateforme"
+                    label={t('gitContributions.platform')}
                     onChange={(e) => setSelectedPlatform(e.target.value as 'github' | 'gitlab')}
                     size="small"
                   >
@@ -353,14 +355,14 @@ const GitContributions: React.FC = () => {
                 <TextField
                   value={newUsername}
                   onChange={(e) => setNewUsername(e.target.value)}
-                  label="Nom d'utilisateur"
+                  label={t('gitContributions.username')}
                   size="small"
                 />
 
                 <TextField
                   value={newToken}
                   onChange={(e) => setNewToken(e.target.value)}
-                  label="Token (read-only profile)"
+                  label={t('gitContributions.token')}
                   size="small"
                   type="password"
                 />
@@ -370,7 +372,7 @@ const GitContributions: React.FC = () => {
                   onClick={handleAddUser}
                   size="small"
                 >
-                  Ajouter
+                  {t('gitContributions.add')}
                 </Button>
               </Box>
             )}
@@ -389,7 +391,7 @@ const GitContributions: React.FC = () => {
                 }}
               >
                 <Typography variant="h6" component="span">+</Typography>
-                Ajouter un compte
+                {t('gitContributions.addAccount')}
               </Button>
             )}
           </Box>
@@ -397,7 +399,7 @@ const GitContributions: React.FC = () => {
           {/* Calendrier global */}
           <Box sx={{ mt: 12, mb: 4 }}>
             <Typography variant="h5" sx={{ mb: 3, color: '#000' }}>
-              PARTICIPATION GLOBALE DE L'ANNÉE PASSÉE
+              {t('gitContributions.globalParticipation')}
             </Typography>
             {isLoading ? (
               <Box sx={{ 
@@ -409,19 +411,20 @@ const GitContributions: React.FC = () => {
                 borderRadius: 1
               }}>
                 <Typography variant="body1" color="text.secondary">
-                  Chargement des contributions...
+                  {t('gitContributions.loading')}
                 </Typography>
               </Box>
             ) : (
               <Box sx={{ 
                 width: '100%',
+                overflowX: 'auto',
                 '& .react-calendar-heatmap': {
-                  width: '100%',
-                  height: '250px'
+                  width: { xs: '800px', sm: '100%' },
+                  height: { xs: '300px', sm: '250px' }
                 },
                 '& .react-calendar-heatmap-small-rect': {
-                  width: '14px',
-                  height: '14px'
+                  width: { xs: '16px', sm: '14px' },
+                  height: { xs: '16px', sm: '14px' }
                 },
                 '& .color-scale-1.github': { fill: '#9be9a8' },
                 '& .color-scale-2.github': { fill: '#40c463' },
@@ -447,7 +450,10 @@ const GitContributions: React.FC = () => {
                     const colorScale = getColorScale(value.count);
                     return `${colorScale} ${user?.platform || 'github'}`;
                   }}
-                  titleForValue={value => value ? `${value.count} contributions le ${new Date(value.date).toLocaleDateString('fr-FR')}` : 'Pas de contributions'}
+                  titleForValue={value => value 
+                    ? `${value.count} ${t('gitContributions.contributionsOn')} ${new Date(value.date).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US')}` 
+                    : t('gitContributions.noContributions')
+                  }
                   showWeekdayLabels={true}
                   gutterSize={4}
                 />
@@ -471,8 +477,17 @@ const GitContributions: React.FC = () => {
                 gap: 2
               }}
             >
-              <Typography variant="h6" sx={{ color: '#666', whiteSpace: 'nowrap' }}>
-                Calendriers détaillés par utilisateur
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  color: '#666', 
+                  whiteSpace: { xs: 'normal', sm: 'nowrap' },
+                  fontSize: { xs: '1.1rem', sm: '1.4rem' },
+                  textAlign: { xs: 'left', sm: 'center' },
+                  width: '100%'
+                }}
+              >
+                {t('gitContributions.detailedCalendars')}
               </Typography>
               <Box sx={{ 
                 flex: 1,
@@ -517,7 +532,10 @@ const GitContributions: React.FC = () => {
                                       value.count <= 9 ? 3 : 4;
                           return `color-scale-${scale} ${user.platform}`;
                         }}
-                        titleForValue={value => value ? `${value.count} contributions le ${new Date(value.date).toLocaleDateString('fr-FR')}` : 'Pas de contributions'}
+                        titleForValue={value => value 
+                          ? `${value.count} ${t('gitContributions.contributionsOn')} ${new Date(value.date).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US')}` 
+                          : t('gitContributions.noContributions')
+                        }
                         showWeekdayLabels={true}
                         gutterSize={2}
                       />

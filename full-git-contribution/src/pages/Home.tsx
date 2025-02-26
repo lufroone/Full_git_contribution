@@ -4,9 +4,11 @@ import { Box, Typography, Button, Container, IconButton } from '@mui/material';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import LogoAnimation from '../components/LogoAnimation';
+import { useLanguage } from '../hooks/useLanguage';
 
 const Home: React.FC = () => {
   const [showTutorial, setShowTutorial] = useState(false);
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (showTutorial) {
@@ -67,7 +69,7 @@ const Home: React.FC = () => {
               mb: { xs: 0, sm: 1 }
             }}
           >
-            All Git Contributions
+            {t('title')}
           </Typography>
           
           <Typography 
@@ -81,7 +83,7 @@ const Home: React.FC = () => {
               mb: { xs: 0, sm: 1 }
             }}
           >
-            Visualisez toutes vos contributions au même endroit de tous vos comptes de versionning au même endroit
+            {t('subtitle')}
           </Typography>
 
           <Typography 
@@ -92,7 +94,7 @@ const Home: React.FC = () => {
               px: { xs: 2, sm: 4 }
             }}
           >
-            Un outil simple pour montrer votre investissement et votre participation
+            {t('description')}
           </Typography>
 
           <Box sx={{ mt: { xs: 2, sm: 3, md: 4 } }}>
@@ -106,7 +108,7 @@ const Home: React.FC = () => {
                 padding: { xs: '8px 24px', sm: '10px 28px', md: '12px 32px' }
               }}
             >
-              Créez votre profil
+              {t('createProfile')}
             </Button>
           </Box>
         </Box>
@@ -172,7 +174,7 @@ const Home: React.FC = () => {
             mt: { xs: 6, sm: 8, md: 10 }
           }}
         >
-          Comment ça marche ?
+          {t('howItWorks')}
         </Typography>
 
         <Box sx={{ 
@@ -190,7 +192,7 @@ const Home: React.FC = () => {
                 fontSize: { xs: '1.2rem', sm: '1.4rem', md: '1.5rem' }
               }}
             >
-              1. Créez votre profil
+              {t('step1.title')}
             </Typography>
             <Typography 
               color="text.secondary"
@@ -198,7 +200,7 @@ const Home: React.FC = () => {
                 fontSize: { xs: '0.9rem', sm: '1rem', md: '1.1rem' }
               }}
             >
-              Cliquez sur le bouton, Créez votre profil et renseignez votre nom et prénom
+              {t('step1.description')}
             </Typography>
           </Box>
 
@@ -210,7 +212,7 @@ const Home: React.FC = () => {
                 fontSize: { xs: '1.2rem', sm: '1.4rem', md: '1.5rem' }
               }}
             >
-              2. Ajoutez vos comptes
+              {t('step2.title')}
             </Typography>
             <Typography 
               color="text.secondary"
@@ -218,7 +220,7 @@ const Home: React.FC = () => {
                 fontSize: { xs: '0.9rem', sm: '1rem', md: '1.1rem' }
               }}
             >
-              Connectez vos comptes GitHub et GitLab en utilisant vos identifiants et vos tokens d'accès personnels, avec uniquement les permissions read_user (gitlab) ou read:user (dans la catégorie user de github), aucune information n'est stocké sur le site donc à la date d'expiration du token il faudra le changer sur votre profil.
+              {t('step2.description')}
             </Typography>
           </Box>
 
@@ -230,7 +232,7 @@ const Home: React.FC = () => {
                 fontSize: { xs: '1.2rem', sm: '1.4rem', md: '1.5rem' }
               }}
             >
-              3. Visualisez vos contributions
+              {t('step3.title')}
             </Typography>
             <Typography 
               color="text.secondary"
@@ -238,7 +240,7 @@ const Home: React.FC = () => {
                 fontSize: { xs: '0.9rem', sm: '1rem', md: '1.1rem' }
               }}
             >
-              Observez toutes vos contributions sur un seul et même calendrier
+              {t('step3.description')}
             </Typography>
           </Box>
 
@@ -250,7 +252,7 @@ const Home: React.FC = () => {
                 fontSize: { xs: '1.2rem', sm: '1.4rem', md: '1.5rem' }
               }}
             >
-              4. Partagez votre profil
+              {t('step4.title')}
             </Typography>
             <Typography 
               color="text.secondary"
@@ -258,7 +260,7 @@ const Home: React.FC = () => {
                 fontSize: { xs: '0.9rem', sm: '1rem', md: '1.1rem' }
               }}
             >
-              Partagez votre profil avec vos collègues et vos clients pour montrer votre investissement et votre participation
+              {t('step4.description')}
             </Typography>
           </Box>
         </Box>

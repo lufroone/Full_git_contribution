@@ -50,12 +50,15 @@ const Header: React.FC<HeaderProps> = ({
     <AppBar position="static" sx={{ 
       backgroundColor: 'white', 
       boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-      height: '80px'
+      height: { xs: 'auto', sm: '80px' },
+      padding: { xs: '10px 0', sm: 0 }
     }}>
       <Toolbar sx={{ 
         justifyContent: 'space-between',
         height: '100%',
-        padding: '0 24px'
+        padding: '0 24px',
+        flexDirection: { xs: 'column', sm: 'row' },
+        gap: { xs: 2, sm: 0 }
       }}>
         <Typography 
           variant="h6" 
@@ -64,7 +67,7 @@ const Header: React.FC<HeaderProps> = ({
           sx={{ 
             color: '#333',
             fontWeight: 600,
-            fontSize: '1.8rem',
+            fontSize: { xs: '1.4rem', sm: '1.8rem' },
             fontFamily: 'Montserrat, sans-serif',
             cursor: 'pointer',
             '&:hover': {
@@ -78,7 +81,9 @@ const Header: React.FC<HeaderProps> = ({
         <Box sx={{ 
           display: 'flex', 
           alignItems: 'center', 
-          gap: 2 
+          gap: { xs: 1, sm: 2 },
+          flexDirection: { xs: 'column', sm: 'row' },
+          width: { xs: '100%', sm: 'auto' }
         }}>
           {readonly ? (
             <Typography 

@@ -77,3 +77,24 @@ body {
   cursor: pointer;
   filter: brightness(0.95);
 }
+
+@media (max-width: 600px) {
+  .react-calendar-heatmap {
+    width: 100% !important;
+    height: auto !important;
+    margin: 20px 0;
+  }
+
+  .react-calendar-heatmap-small-rect {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  .react-calendar-heatmap text {
+    font-size: 10px !important;
+  }
+
+  .react-calendar-heatmap .react-calendar-heatmap-month-labels {
+    transform: translateX(30px);
+  }
+}
