@@ -1,7 +1,7 @@
 export const translations = {
   fr: {
     title: "All Git Contributions",
-    subtitle: "Visualisez toutes vos contributions privés comme public au même endroit de tous vos comptes de versionning",
+    subtitle: "Visualisez toutes vos contributions privées et publiques au même endroit de tous vos comptes de versionning",
     description: "Un outil simple pour montrer votre investissement et votre participation",
     createProfile: "Créez votre profil",
     howItWorks: "Comment ça marche ?",
